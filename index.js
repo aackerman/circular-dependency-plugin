@@ -1,20 +1,19 @@
 function CircularDependencyPlugin() {}
 
-function isCyclic(id, dependencies) {
-  var seen = [];
+function isCyclic(initialModule) {
+  var seen = {};
 
-  function detect(deps) {
+  function detect(parent, deps) {
+    var mod;
+
     for (var i in deps) {
       if (deps[i].module) {
+        mod = deps[i].module;
         // if we have seen the module before we are definitely cycling
-        if (seen.indexOf(deps[i].module.id) > -1) {
-          return true;
-        }
-
-        seen.push(deps[i].module.id);
-
+        if (mod.id in seen) { return true; }
+        seen[mod.id] = {};
         // if the module is ourselves we are definitely cycling
-        if (detect(deps[i].module.dependencies) && seen.indexOf(id) > -1) {
+        if (detect(mod, mod.dependencies) && initialModule.id in seen) {
           return true;
         }
       }
@@ -22,7 +21,7 @@ function isCyclic(id, dependencies) {
     return false;
   }
 
-  return detect(dependencies);
+  return detect(initialModule, initialModule.dependencies);
 }
 
 CircularDependencyPlugin.prototype.apply = function(compiler) {
@@ -30,9 +29,9 @@ CircularDependencyPlugin.prototype.apply = function(compiler) {
     var modules = c.compilation.modules;
 
     modules.forEach(function(module, idx){
-      console.log(isCyclic(module.id, module.dependencies), 'module id', module.id);
+      if (isCyclic(module)) {
+        console.log(module.resource, 'contains cyclical dependency')
+      }
     });
   });
 }
-
-module.exports = CircularDependencyPlugin;
