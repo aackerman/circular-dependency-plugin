@@ -1,6 +1,11 @@
 var path = require('path');
+var extend = require('util')._extend;
 
-function CircularDependencyPlugin() {}
+function CircularDependencyPlugin(options) {
+  this.options = extend({
+    exclude: new RegExp('$^')
+  }, options);
+}
 
 function isCyclic(initialModule) {
   var seen = {};
@@ -27,11 +32,13 @@ function isCyclic(initialModule) {
 }
 
 CircularDependencyPlugin.prototype.apply = function(compiler) {
+  var plugin = this;
+
   compiler.plugin('done', function(stats){
     var modules = stats.compilation.modules;
 
     modules.forEach(function(module){
-      if (isCyclic(module)) {
+      if (isCyclic(module) && !plugin.options.exclude.test(module.resource)) {
         var relativePathToModule = path.relative(process.cwd(), module.resource);
         console.warn(relativePathToModule, 'contains cyclical dependency');
       }

@@ -8,7 +8,9 @@ Detect modules with circular dependencies when bundling with webpack.
 module.exports = {
   entry: "./src/index",
   plugins: [
-    new CircularDependencyPlugin()
+    new CircularDependencyPlugin({
+      exclude: /a\.js/
+    })
   ]
 }
 ```

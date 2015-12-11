@@ -66,4 +66,33 @@ describe('circular dependency', () => {
       }
     });
   });
+
+  it('can exclude cyclical deps from being output', (done) => {
+    var s = sandbox.stub(console, 'warn', console.warn);
+    var fs = new MemoryFS();
+    var c = webpack({
+      entry: path.join(__dirname, 'deps/d.js'),
+      output: { path: __dirname },
+      plugins: [
+        new CircularDependencyPlugin({
+          exclude: /f\.js/
+        })
+      ]
+    });
+
+    c.outputFileSystem = fs;
+
+    c.run(function(err, stats){
+      if (err) {
+        assert(false, err);
+        done();
+      } else {
+        assert(s.getCall(0).args[0].match(/e\.js/));
+        assert(s.getCall(0).args[1].match(/cyclical/));
+        assert(s.getCall(1).args[0].match(/g\.js/));
+        assert(s.getCall(1).args[1].match(/cyclical/));
+        done();
+      }
+    });
+  });
 });
