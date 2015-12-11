@@ -25,13 +25,15 @@ function isCyclic(initialModule) {
 }
 
 CircularDependencyPlugin.prototype.apply = function(compiler) {
-  compiler.plugin('done', function(c){
-    var modules = c.compilation.modules;
+  compiler.plugin('done', function(stats){
+    var modules = stats.compilation.modules;
 
-    modules.forEach(function(module, idx){
+    modules.forEach(function(module){
       if (isCyclic(module)) {
-        console.log(module.resource, 'contains cyclical dependency')
+        console.warn(module.resource, 'contains cyclical dependency');
       }
     });
   });
 }
+
+module.exports = CircularDependencyPlugin;

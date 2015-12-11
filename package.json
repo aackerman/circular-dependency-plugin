@@ -1,4 +1,10 @@
 {
   "name": "circular-dependency-plugin",
-  "main": "index.js"
+  "main": "index.js",
+  "devDependencies": {
+    "memory-fs": "^0.3.0",
+    "mocha": "^2.3.4",
+    "sinon": "^1.17.2",
+    "webpack": "^1.12.9"
+  }
 }
