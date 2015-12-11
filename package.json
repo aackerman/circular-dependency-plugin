@@ -9,12 +9,7 @@
   },
   "description": "Detect modules with circular dependencies when bundling with webpack.",
   "version": "1.0.0",
-  "dependencies": {
-    "jasmine-core": "^2.4.1",
-    "karma": "^0.13.15",
-    "karma-jasmine": "^0.3.6",
-    "webpack": "^1.12.9"
-  },
+  "dependencies": {},
   "scripts": {
     "test": "mocha __tests__"
   },
