@@ -1,3 +1,5 @@
+var path = require('path');
+
 function CircularDependencyPlugin() {}
 
 function isCyclic(initialModule) {
@@ -30,7 +32,8 @@ CircularDependencyPlugin.prototype.apply = function(compiler) {
 
     modules.forEach(function(module){
       if (isCyclic(module)) {
-        console.warn(module.resource, 'contains cyclical dependency');
+        var relativePathToModule = path.relative(process.cwd(), module.resource);
+        console.warn(relativePathToModule, 'contains cyclical dependency');
       }
     });
   });
