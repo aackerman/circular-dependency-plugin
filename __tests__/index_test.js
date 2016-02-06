@@ -95,4 +95,28 @@ describe('circular dependency', () => {
       }
     });
   });
+
+
+  it(`can handle context modules that have an undefined resource h -> i -> a -> i`, (done) => {
+    var s = sandbox.stub(console, 'warn', console.warn);
+    var fs = new MemoryFS();
+    var c = webpack({
+      entry: path.join(__dirname, 'deps/h.js'),
+      output: { path: __dirname },
+      plugins: [
+        new CircularDependencyPlugin()
+      ]
+    });
+
+    c.outputFileSystem = fs;
+
+    c.run(function(err, stats){
+      if (err) {
+        assert(false, err);
+        done();
+      } else {
+        done();
+      }
+    });
+  });
 });

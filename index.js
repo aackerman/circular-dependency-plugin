@@ -38,6 +38,7 @@ CircularDependencyPlugin.prototype.apply = function(compiler) {
     var modules = stats.compilation.modules;
 
     modules.forEach(function(module){
+      if (module.resource === undefined) { return; }
       if (isCyclic(module) && !plugin.options.exclude.test(module.resource)) {
         var relativePathToModule = path.relative(process.cwd(), module.resource);
         console.warn(relativePathToModule, 'contains cyclical dependency');
