@@ -7,28 +7,35 @@ function CircularDependencyPlugin(options) {
   }, options);
 }
 
-function isCyclic(initialModule) {
-  var seen = {};
+function isCyclic(initialModule, currentModule, seenModules) {
+  seenModules[currentModule.id] = {};
 
-  function detect(parent, deps) {
-    var mod;
-
-    for (var i in deps) {
-      if (deps[i].module) {
-        mod = deps[i].module;
-        // if we have seen the module before we are definitely cycling
-        if (mod.id in seen) { return true; }
-        seen[mod.id] = {};
-        // if the module is ourselves we are definitely cycling
-        if (detect(mod, mod.dependencies) && initialModule.id in seen) {
-          return true;
-        }
-      }
-    }
+  if (!currentModule.resource || !initialModule.resource) {
     return false;
   }
 
-  return detect(initialModule, initialModule.dependencies);
+  for (var i in currentModule.dependencies) {
+    var dep = currentModule.dependencies[i].module;
+
+    if (!dep) {
+      continue;
+    }
+
+    if (dep.id in seenModules) {
+      if (dep.id === initialModule.id) {
+        // Initial module has circ dep
+        return [path.relative(process.cwd(), currentModule.resource), path.relative(process.cwd(), dep.resource)];
+      }
+      // Found a cycle, but not for this module
+      continue;
+    }
+    var cyclePath = isCyclic(initialModule, dep, seenModules);
+    if (cyclePath) {
+      cyclePath.unshift(path.relative(process.cwd(), currentModule.resource));
+      return cyclePath;
+    }
+  }
+  return null;
 }
 
 CircularDependencyPlugin.prototype.apply = function(compiler) {
@@ -38,10 +45,11 @@ CircularDependencyPlugin.prototype.apply = function(compiler) {
     var modules = stats.compilation.modules;
 
     modules.forEach(function(module){
-      if (module.resource === undefined) { return; }
-      if (isCyclic(module) && !plugin.options.exclude.test(module.resource)) {
+      if (module.resource === undefined || plugin.options.exclude.test(module.resource)) { return; }
+      var cyclePath = isCyclic(module, module, {});
+      if (cyclePath) {
         var relativePathToModule = path.relative(process.cwd(), module.resource);
-        console.warn(relativePathToModule, 'contains cyclical dependency');
+        console.warn('Circular dependency detected:\r\n', cyclePath.join(' -> '));
       }
     });
   });
