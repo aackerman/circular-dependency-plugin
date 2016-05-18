@@ -31,10 +31,9 @@ describe('circular dependency', () => {
         assert(false, err);
         done();
       } else {
-        assert(s.getCall(0).args[0].match(/b\.js/));
-        assert(s.getCall(0).args[1].match(/cyclical/));
-        assert(s.getCall(1).args[0].match(/c\.js/));
-        assert(s.getCall(1).args[1].match(/cyclical/));
+        assert(s.getCall(0).args[0].match(/Circular/));
+        assert(s.getCall(0).args[1].match(/b\.js/));
+        assert(s.getCall(0).args[1].match(/c\.js/));
         done();
       }
     });
@@ -56,12 +55,10 @@ describe('circular dependency', () => {
         assert(false, err);
         done();
       } else {
-        assert(s.getCall(0).args[0].match(/e\.js/));
-        assert(s.getCall(0).args[1].match(/cyclical/));
-        assert(s.getCall(1).args[0].match(/f\.js/));
-        assert(s.getCall(1).args[1].match(/cyclical/));
-        assert(s.getCall(2).args[0].match(/g\.js/));
-        assert(s.getCall(2).args[1].match(/cyclical/));
+        assert(s.getCall(0).args[0].match(/Circular/));
+        assert(s.getCall(0).args[1].match(/e\.js/));
+        assert(s.getCall(0).args[1].match(/f\.js/));
+        assert(s.getCall(0).args[1].match(/g\.js/));
         done();
       }
     });
@@ -87,10 +84,9 @@ describe('circular dependency', () => {
         assert(false, err);
         done();
       } else {
-        assert(s.getCall(0).args[0].match(/e\.js/));
-        assert(s.getCall(0).args[1].match(/cyclical/));
-        assert(s.getCall(1).args[0].match(/g\.js/));
-        assert(s.getCall(1).args[1].match(/cyclical/));
+        assert(s.getCall(0).args[0].match(/Circular/));
+        assert(s.getCall(0).args[1].match(/e\.js/));
+        assert(s.getCall(0).args[1].match(/g\.js/));
         done();
       }
     });
