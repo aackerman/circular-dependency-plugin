@@ -3,7 +3,8 @@ var extend = require('util')._extend;
 
 function CircularDependencyPlugin(options) {
   this.options = extend({
-    exclude: new RegExp('$^')
+    exclude: new RegExp('$^'),
+    failOnError: false
   }, options);
 }
 
@@ -49,7 +50,12 @@ CircularDependencyPlugin.prototype.apply = function(compiler) {
       var cyclePath = isCyclic(module, module, {});
       if (cyclePath) {
         var relativePathToModule = path.relative(process.cwd(), module.resource);
-        console.warn('Circular dependency detected:\r\n', cyclePath.join(' -> '));
+        var msg = 'Circular dependency detected:\r\n'.concat(cyclePath.join(' -> '));
+        if(plugin.options.failOnError) {
+          stats.compilation.errors.push(msg);
+        } else {
+          stats.compilation.warnings.push(msg);
+        }
       }
     });
   });
