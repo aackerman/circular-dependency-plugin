@@ -16,7 +16,6 @@ describe('circular dependency', () => {
   });
 
   it('detects circular dependencies from a -> b -> c -> b', (done) => {
-    var s = sandbox.stub(console, 'warn', console.warn);
     var fs = new MemoryFS();
     var c = webpack({
       entry: path.join(__dirname, 'deps/a.js'),
@@ -31,16 +30,17 @@ describe('circular dependency', () => {
         assert(false, err);
         done();
       } else {
-        assert(s.getCall(0).args[0].match(/Circular/));
-        assert(s.getCall(0).args[1].match(/b\.js/));
-        assert(s.getCall(0).args[1].match(/c\.js/));
+        stats = stats.toJson()
+        assert(stats.warnings[0].includes('__tests__/deps/b.js -> __tests__/deps/c.js -> __tests__/deps/b.js'))
+        assert(stats.warnings[0].match(/Circular/))
+        assert(stats.warnings[1].match(/b\.js/))
+        assert(stats.warnings[1].match(/c\.js/))
         done();
       }
     });
   });
 
   it('detects circular dependencies from d -> e -> f -> g -> e', (done) => {
-    var s = sandbox.stub(console, 'warn', console.warn);
     var fs = new MemoryFS();
     var c = webpack({
       entry: path.join(__dirname, 'deps/d.js'),
@@ -55,10 +55,40 @@ describe('circular dependency', () => {
         assert(false, err);
         done();
       } else {
-        assert(s.getCall(0).args[0].match(/Circular/));
-        assert(s.getCall(0).args[1].match(/e\.js/));
-        assert(s.getCall(0).args[1].match(/f\.js/));
-        assert(s.getCall(0).args[1].match(/g\.js/));
+        stats = stats.toJson()
+        assert(stats.warnings[0].includes('__tests__/deps/e.js -> __tests__/deps/f.js -> __tests__/deps/g.js -> __tests__/deps/e.js'))
+        assert(stats.warnings[0].match(/Circular/))
+        assert(stats.warnings[1].match(/e\.js/))
+        assert(stats.warnings[1].match(/f\.js/))
+        assert(stats.warnings[1].match(/g\.js/))
+        done();
+      }
+    });
+  });
+
+  it('uses errors instead of warnings with failOnError', (done) => {
+    var fs = new MemoryFS();
+    var c = webpack({
+      entry: path.join(__dirname, 'deps/d.js'),
+      output: { path: __dirname },
+      plugins: [ new CircularDependencyPlugin({
+        failOnError: true
+      }) ]
+    });
+
+    c.outputFileSystem = fs;
+
+    c.run(function(err, stats){
+      if (err) {
+        assert(false, err);
+        done();
+      } else {
+        stats = stats.toJson()
+        assert(stats.errors[0].includes('__tests__/deps/e.js -> __tests__/deps/f.js -> __tests__/deps/g.js -> __tests__/deps/e.js'))
+        assert(stats.errors[0].match(/Circular/))
+        assert(stats.errors[1].match(/e\.js/))
+        assert(stats.errors[1].match(/f\.js/))
+        assert(stats.errors[1].match(/g\.js/))
         done();
       }
     });
@@ -84,9 +114,10 @@ describe('circular dependency', () => {
         assert(false, err);
         done();
       } else {
-        assert(s.getCall(0).args[0].match(/Circular/));
-        assert(s.getCall(0).args[1].match(/e\.js/));
-        assert(s.getCall(0).args[1].match(/g\.js/));
+        stats = stats.toJson()
+        assert(stats.warnings[0].match(/Circular/))
+        assert(stats.warnings[1].match(/e\.js/))
+        assert(stats.warnings[1].match(/g\.js/))
         done();
       }
     });
