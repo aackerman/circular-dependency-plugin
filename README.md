@@ -9,7 +9,8 @@ module.exports = {
   entry: "./src/index",
   plugins: [
     new CircularDependencyPlugin({
-      exclude: /a\.js/
+      exclude: /a\.js/,
+      failOnError: true
     })
   ]
 }
