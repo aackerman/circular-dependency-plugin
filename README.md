@@ -8,6 +8,8 @@ Circular dependencies are often a necessity in complex software, the presence of
 
 ```js
 // webpack.config.js
+let CircularDependencyPlugin = require('circular-dependency-plugin')
+
 module.exports = {
   entry: "./src/index",
   plugins: [
