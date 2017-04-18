@@ -8,7 +8,7 @@
     "webpack": "^1.12.9"
   },
   "description": "Detect modules with circular dependencies when bundling with webpack.",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "dependencies": {},
   "scripts": {
     "test": "mocha __tests__"
