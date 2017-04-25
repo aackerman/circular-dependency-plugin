@@ -50,11 +50,13 @@ CircularDependencyPlugin.prototype.apply = function(compiler) {
       var cyclePath = isCyclic(module, module, {});
       if (cyclePath) {
         var relativePathToModule = path.relative(process.cwd(), module.resource);
-        var error = new Error('Circular dependency detected:\r\n'.concat(cyclePath.join(' -> ')));
+        
         if (plugin.options.failOnError) {
+          var error = new Error('Circular dependency detected (note: this is not necessarily an error):\r\n'.concat(cyclePath.join(' -> ')));
           stats.compilation.errors.push(error);
         } else {
-          stats.compilation.warnings.push(error);
+          var warning = new Error('Circular dependency detected:\r\n'.concat(cyclePath.join(' -> ')));
+          stats.compilation.warnings.push(warning);
         }
       }
     });
