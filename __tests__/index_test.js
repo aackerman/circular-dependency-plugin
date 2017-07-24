@@ -31,7 +31,7 @@ describe('circular dependency', () => {
         done();
       } else {
         stats = stats.toJson()
-        assert(stats.warnings[0].includes('__tests__/deps/b.js -> __tests__/deps/c.js -> __tests__/deps/b.js'))
+        assert(stats.warnings[0].match(new RegExp('__tests__/deps/b.js\\s+-> __tests__/deps/c.js\\s+-> __tests__/deps/b.js')))
         assert(stats.warnings[0].match(/Circular/))
         assert(stats.warnings[1].match(/b\.js/))
         assert(stats.warnings[1].match(/c\.js/))
@@ -56,7 +56,7 @@ describe('circular dependency', () => {
         done();
       } else {
         stats = stats.toJson()
-        assert(stats.warnings[0].includes('__tests__/deps/e.js -> __tests__/deps/f.js -> __tests__/deps/g.js -> __tests__/deps/e.js'))
+        assert(stats.warnings[0].match(new RegExp('__tests__/deps/e.js\\s+-> __tests__/deps/f.js\\s+-> __tests__/deps/g.js\\s+-> __tests__/deps/e.js')))
         assert(stats.warnings[0].match(/Circular/))
         assert(stats.warnings[1].match(/e\.js/))
         assert(stats.warnings[1].match(/f\.js/))
@@ -84,7 +84,7 @@ describe('circular dependency', () => {
         done();
       } else {
         stats = stats.toJson()
-        assert(stats.errors[0].includes('__tests__/deps/e.js -> __tests__/deps/f.js -> __tests__/deps/g.js -> __tests__/deps/e.js'))
+        assert(stats.errors[0].match(new RegExp('__tests__/deps/e.js\\s+-> __tests__/deps/f.js\\s+-> __tests__/deps/g.js\\s+-> __tests__/deps/e.js')))
         assert(stats.errors[0].match(/Circular/))
         assert(stats.errors[1].match(/e\.js/))
         assert(stats.errors[1].match(/f\.js/))
