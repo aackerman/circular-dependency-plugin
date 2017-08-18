@@ -4,6 +4,7 @@ var extend = require('util')._extend;
 function CircularDependencyPlugin(options) {
   this.options = extend({
     exclude: new RegExp('$^'),
+    outputFormat: 'full',
     failOnError: false
   }, options);
 }
@@ -43,21 +44,29 @@ CircularDependencyPlugin.prototype.apply = function(compiler) {
   var plugin = this;
 
   compiler.plugin('done', function(stats){
+    var output = plugin.options.failOnError ? stats.compilation.errors : stats.compilation.warnings;
     var modules = stats.compilation.modules;
+    var circularDependencies = [];
 
     modules.forEach(function(module){
       if (module.resource === undefined || plugin.options.exclude.test(module.resource)) { return; }
       var cyclePath = isCyclic(module, module, {});
       if (cyclePath) {
-        var relativePathToModule = path.relative(process.cwd(), module.resource);
-        var error = new Error('Circular dependency detected:\r\n'.concat(cyclePath.join(' -> ')));
-        if (plugin.options.failOnError) {
-          stats.compilation.errors.push(error);
-        } else {
-          stats.compilation.warnings.push(error);
-        }
+        circularDependencies.push(cyclePath);
       }
     });
+
+    if (plugin.options.outputFormat === 'summary') {
+      if (circularDependencies.length) {
+        output.push(new Error(circularDependencies.length + ' circular '
+          + ((circularDependencies.length === 1) ? 'dependency' : 'dependencies')
+          + ' detected.'));
+      }
+    } else {
+      circularDependencies.forEach(function(cyclePath) {
+        output.push(new Error('Circular dependency detected:\r\n'.concat(cyclePath.join(' -> '))));
+      });
+    }
   });
 }
 
