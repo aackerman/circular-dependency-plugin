@@ -94,6 +94,31 @@ describe('circular dependency', () => {
     });
   });
 
+  it('summarizes output to one line with outputFormat of "summary"', (done) => {
+    var fs = new MemoryFS();
+    var c = webpack({
+      entry: path.join(__dirname, 'deps/d.js'),
+      output: { path: __dirname },
+      plugins: [ new CircularDependencyPlugin({
+        outputFormat: 'summary'
+      }) ]
+    });
+
+    c.outputFileSystem = fs;
+
+    c.run(function(err, stats){
+      if (err) {
+        assert(false, err);
+        done();
+      } else {
+        stats = stats.toJson()
+        assert(stats.warnings.length === 1);
+        assert(stats.warnings[0] === '3 circular dependencies detected.')
+        done();
+      }
+    });
+  });
+
   it('can exclude cyclical deps from being output', (done) => {
     var s = sandbox.stub(console, 'warn', console.warn);
     var fs = new MemoryFS();
