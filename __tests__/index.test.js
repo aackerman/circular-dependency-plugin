@@ -156,4 +156,22 @@ describe('circular dependency', () => {
     expect(stats.warnings[1]).toMatch(/f\.js/)
     expect(stats.warnings[1]).toMatch(/g\.js/)
   })
+
+  it('can detect circular dependencies when the ModuleConcatenationPlugin is used', async () => {
+    let fs = new MemoryFS()
+    let compiler = webpack({
+      entry: path.join(__dirname, 'deps/module-concat-plugin-compat/index.js'),
+      output: { path: __dirname },
+      plugins: [
+        new webpack.optimize.ModuleConcatenationPlugin(),
+        new CircularDependencyPlugin()
+      ]
+    })
+    compiler.outputFileSystem = fs
+
+    let runAsync = wrapRun(compiler.run.bind(compiler))
+    let stats = await runAsync()
+    expect(stats.warnings[0]).toContain('__tests__/deps/module-concat-plugin-compat/a.js -> __tests__/deps/module-concat-plugin-compat/b.js -> __tests__/deps/module-concat-plugin-compat/a.js')
+    expect(stats.warnings[1]).toContain('__tests__/deps/module-concat-plugin-compat/b.js -> __tests__/deps/module-concat-plugin-compat/a.js -> __tests__/deps/module-concat-plugin-compat/b.js')
+  })
 })

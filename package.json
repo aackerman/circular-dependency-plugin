@@ -4,15 +4,17 @@
   "devDependencies": {
     "jest": "^20.0.4",
     "memory-fs": "^0.3.0",
-    "webpack": "^1.12.9"
+    "webpack": "^3.5.5"
   },
   "description": "Detect modules with circular dependencies when bundling with webpack.",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "dependencies": {},
   "scripts": {
     "test": "jest"
   },
-  "files": ["index.js"],
+  "files": [
+    "index.js"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aackerman/circular-dependency-plugin.git"
