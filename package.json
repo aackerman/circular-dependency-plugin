@@ -2,17 +2,17 @@
   "name": "circular-dependency-plugin",
   "main": "index.js",
   "devDependencies": {
+    "jest": "^20.0.4",
     "memory-fs": "^0.3.0",
-    "mocha": "^2.3.4",
-    "sinon": "^1.17.2",
     "webpack": "^1.12.9"
   },
   "description": "Detect modules with circular dependencies when bundling with webpack.",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "dependencies": {},
   "scripts": {
-    "test": "mocha __tests__"
+    "test": "jest"
   },
+  "files": ["index.js"],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aackerman/circular-dependency-plugin.git"
@@ -22,5 +22,10 @@
   "bugs": {
     "url": "https://github.com/aackerman/circular-dependency-plugin/issues"
   },
-  "homepage": "https://github.com/aackerman/circular-dependency-plugin#readme"
+  "homepage": "https://github.com/aackerman/circular-dependency-plugin#readme",
+  "jest": {
+    "testMatch": [
+      "**/?(*.)(spec|test).js?(x)"
+    ]
+  }
 }
