@@ -25,6 +25,7 @@ class CircularDependencyPlugin {
             if (plugin.options.onDetected) {
               try {
                 plugin.options.onDetected({
+                  module: module,
                   paths: maybeCyclicalPathsList,
                   compilation: compilation
                 })
