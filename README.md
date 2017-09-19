@@ -4,7 +4,7 @@ Detect modules with circular dependencies when bundling with webpack.
 
 Circular dependencies are often a necessity in complex software, the presence of a circular dependency doesn't always imply a bug, but in the case where the you believe a bug exists, this module may help find it.
 
-### Usage
+### Basic Usage
 
 ```js
 // webpack.config.js
@@ -17,8 +17,22 @@ module.exports = {
       // exclude detection of files based on a RegExp
       exclude: /a\.js|node_modules/,
       // add errors to webpack instead of warnings
-      failOnError: true,
-      // override `exclude` and `failOnError` behavior
+      failOnError: true
+    })
+  ]
+}
+```
+
+### Advanced Usage
+
+```js
+// webpack.config.js
+let CircularDependencyPlugin = require('circular-dependency-plugin')
+
+module.exports = {
+  entry: "./src/index",
+  plugins: [
+    new CircularDependencyPlugin({
       // `onDetected` is called for each module that is cyclical
       onDetected({ module: webpackModuleRecord, paths, compilation }) {
         // `paths` will be an Array of the relative module paths that make up the cycle
