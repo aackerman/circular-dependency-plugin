@@ -2,7 +2,7 @@
 
 Detect modules with circular dependencies when bundling with webpack.
 
-Circular dependencies are often a necessity in complex software, the presence of a circular dependency doesn't always imply a bug, but in the case where the you believe a bug exists, this module may help find it.
+Circular dependencies are often a necessity in complex software, the presence of a circular dependency doesn't always imply a bug, but in the case where you believe a bug exists, this module may help find it.
 
 ### Basic Usage
 
