@@ -18,6 +18,9 @@ class CircularDependencyPlugin {
 
     compiler.plugin('compilation', (compilation) => {
       compilation.plugin('optimize-modules', (modules) => {
+        if (plugin.options.onStartDetecting) {
+          plugin.options.onStartDetecting({ compilation });
+        }
         for (let module of modules) {
           if (module.resource === undefined) { continue }
           let maybeCyclicalPathsList = this.isCyclic(module, module, {})
@@ -49,6 +52,9 @@ class CircularDependencyPlugin {
               compilation.warnings.push(error)
             }
           }
+        }
+        if (plugin.options.onEndDetecting) {
+          plugin.options.onEndDetecting({ compilation });
         }
       })
     })
