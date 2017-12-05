@@ -18,8 +18,8 @@ class CircularDependencyPlugin {
 
     compiler.plugin('compilation', (compilation) => {
       compilation.plugin('optimize-modules', (modules) => {
-        if (plugin.options.onStartDetecting) {
-          plugin.options.onStartDetecting({ compilation });
+        if (plugin.options.onStart) {
+          plugin.options.onStart({ compilation });
         }
         for (let module of modules) {
           if (module.resource === undefined) { continue }
@@ -53,8 +53,8 @@ class CircularDependencyPlugin {
             }
           }
         }
-        if (plugin.options.onEndDetecting) {
-          plugin.options.onEndDetecting({ compilation });
+        if (plugin.options.onEnd) {
+          plugin.options.onEnd({ compilation });
         }
       })
     })

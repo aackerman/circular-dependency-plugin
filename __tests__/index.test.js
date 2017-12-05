@@ -114,10 +114,10 @@ describe('circular dependency', () => {
       output: { path: __dirname },
       plugins: [
         new CircularDependencyPlugin({
-          onStartDetecting({ compilation }) {
+          onStart({ compilation }) {
             compilation.warnings.push('started');
           },
-          onEndDetecting({ compilation }) {
+          onEnd({ compilation }) {
             compilation.errors.push('ended');
           }
         })
