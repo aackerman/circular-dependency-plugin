@@ -107,6 +107,32 @@ describe('circular dependency', () => {
     let stats = await runAsync()
   })
 
+  it('allows hooking into detection cycle', async () => {
+    let fs = new MemoryFS()
+    let compiler = webpack({
+      entry: path.join(__dirname, 'deps/nocycle.js'),
+      output: { path: __dirname },
+      plugins: [
+        new CircularDependencyPlugin({
+          onStart({ compilation }) {
+            compilation.warnings.push('started');
+          },
+          onEnd({ compilation }) {
+            compilation.errors.push('ended');
+          }
+        })
+      ]
+    })
+    compiler.outputFileSystem = fs
+
+    let runAsync = wrapRun(compiler.run.bind(compiler))
+    let stats = await runAsync()
+
+    expect(stats.warnings).toEqual(['started']);
+    expect(stats.errors).toEqual(['ended']);
+  })
+
+
   it('allows overriding all behavior with onDetected', async () => {
     let cyclesPaths
     let fs = new MemoryFS()
