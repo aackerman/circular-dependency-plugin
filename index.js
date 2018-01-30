@@ -22,7 +22,10 @@ class CircularDependencyPlugin {
           plugin.options.onStart({ compilation });
         }
         for (let module of modules) {
-          if (module.resource === undefined) { continue }
+          const shouldSkip = module.resource === undefined 
+              || plugin.options.exclude.test(module.resource);
+          if (shouldSkip) { continue }
+
           let maybeCyclicalPathsList = this.isCyclic(module, module, {})
           if (maybeCyclicalPathsList) {
             // allow consumers to override all behavior with onDetected
@@ -36,11 +39,6 @@ class CircularDependencyPlugin {
               } catch(err) {
                 compilation.errors.push(err)
               }
-              continue
-            }
-
-            // exclude modules based on regex test
-            if (plugin.options.exclude.test(module.resource)) {
               continue
             }
 
