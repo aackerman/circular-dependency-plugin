@@ -16,6 +16,7 @@ describe('circular dependency', () => {
   it('detects circular dependencies from a -> b -> c -> b', async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/a.js'),
       output: { path: __dirname },
       plugins: [ new CircularDependencyPlugin() ]
@@ -34,6 +35,7 @@ describe('circular dependency', () => {
   it('detects circular dependencies from d -> e -> f -> g -> e', async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/d.js'),
       output: { path: __dirname },
       plugins: [ new CircularDependencyPlugin() ]
@@ -53,6 +55,7 @@ describe('circular dependency', () => {
   it('uses errors instead of warnings with failOnError', async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/d.js'),
       output: { path: __dirname },
       plugins: [ new CircularDependencyPlugin({
@@ -74,6 +77,7 @@ describe('circular dependency', () => {
   it('can exclude cyclical deps from being output', async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/d.js'),
       output: { path: __dirname },
       plugins: [
@@ -95,6 +99,7 @@ describe('circular dependency', () => {
   it(`can handle context modules that have an undefined resource h -> i -> a -> i`, async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/h.js'),
       output: { path: __dirname },
       plugins: [
@@ -110,6 +115,7 @@ describe('circular dependency', () => {
   it('allows hooking into detection cycle', async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/nocycle.js'),
       output: { path: __dirname },
       plugins: [
@@ -137,6 +143,7 @@ describe('circular dependency', () => {
     let cyclesPaths
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/d.js'),
       output: { path: __dirname },
       plugins: [
@@ -162,6 +169,7 @@ describe('circular dependency', () => {
   it('detects circular dependencies from d -> e -> f -> g -> e', async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/d.js'),
       output: { path: __dirname },
       plugins: [
@@ -186,6 +194,7 @@ describe('circular dependency', () => {
   it('can detect circular dependencies when the ModuleConcatenationPlugin is used', async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
+      mode: 'development',
       entry: path.join(__dirname, 'deps/module-concat-plugin-compat/index.js'),
       output: { path: __dirname },
       plugins: [

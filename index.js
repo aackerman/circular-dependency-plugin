@@ -1,6 +1,7 @@
 let path = require('path')
 let extend = require('util')._extend
 let BASE_ERROR = 'Circular dependency detected:\r\n'
+let PluginTitle = 'CircularDependencyPlugin'
 
 class CircularDependencyPlugin {
   constructor(options) {
@@ -16,8 +17,8 @@ class CircularDependencyPlugin {
     let plugin = this
     let cwd = this.options.cwd
 
-    compiler.plugin('compilation', (compilation) => {
-      compilation.plugin('optimize-modules', (modules) => {
+    compiler.hooks.compilation.tap(PluginTitle, (compilation) => {
+      compilation.hooks.optimizeModules.tap(PluginTitle, (modules) => {
         if (plugin.options.onStart) {
           plugin.options.onStart({ compilation });
         }

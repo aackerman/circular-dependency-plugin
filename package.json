@@ -2,16 +2,18 @@
   "name": "circular-dependency-plugin",
   "main": "index.js",
   "devDependencies": {
-    "jest": "^20.0.4",
-    "memory-fs": "^0.3.0",
-    "webpack": "^3.5.5"
+    "jest": "^22.4.2",
+    "memory-fs": "^0.4.1",
+    "webpack": "^4.0.1"
+  },
+  "peerDependencies": {
+    "webpack": "4.x"
   },
   "description": "Detect modules with circular dependencies when bundling with webpack.",
-  "version": "4.4.0",
+  "version": "5.0.0",
   "engines": {
     "node": ">=6.0.0"
   },
-  "dependencies": {},
   "scripts": {
     "test": "jest"
   },
