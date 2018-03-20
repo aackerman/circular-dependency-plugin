@@ -23,9 +23,14 @@ class CircularDependencyPlugin {
           plugin.options.onStart({ compilation });
         }
         for (let module of modules) {
-          const shouldSkip = module.resource === undefined 
-              || plugin.options.exclude.test(module.resource);
-          if (shouldSkip) { continue }
+          const shouldSkip = (
+            module.resource == null ||
+            plugin.options.exclude.test(module.resource)
+          )
+          // skip the module if it matches the exclude pattern
+          if (shouldSkip) {
+            continue
+          }
 
           let maybeCyclicalPathsList = this.isCyclic(module, module, {})
           if (maybeCyclicalPathsList) {
