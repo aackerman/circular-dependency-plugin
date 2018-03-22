@@ -7,7 +7,7 @@
     "webpack": "^4.0.1"
   },
   "peerDependencies": {
-    "webpack": "4.x"
+    "webpack": ">=4.0.1"
   },
   "description": "Detect modules with circular dependencies when bundling with webpack.",
   "version": "5.0.0",

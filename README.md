@@ -6,7 +6,7 @@ Circular dependencies are often a necessity in complex software, the presence of
 
 ### Webpack Versions
 
-The latest major version of this plugin `5`, supports webpack `4.x.x` as a peer dependency. Major version `4` of this plugin and below are intended to support webpack `3.x.x` and below as a peer dependency.
+The latest major version of this plugin `5`, supports webpack `4.0.1` and greater as a peer dependency. Major version `4` of this plugin and below are intended to support webpack `3.x.x` and below as a peer dependency.
 
 ### Basic Usage
 
