@@ -1,10 +1,13 @@
 # Changelog
 
+## 5.0.1
+
+* Set webpack peer dependency to greater than `4.0.1`
+
 ## 5.0.0
 
 * Support for webpack 4
 * Exclude logic will now be checked regardless of presence of `onDetected` method
-
 
 ## 4.4.0
 
