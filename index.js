@@ -80,6 +80,8 @@ class CircularDependencyPlugin {
     for (let dependency of currentModule.dependencies) {
       let depModule = dependency.module
       if (!depModule) { continue }
+      // ignore dependencies that don't have an associated resource
+      if (!depModule.resource) { continue }
 
       if (depModule.debugId in seenModules) {
         if (depModule.debugId === initialModule.debugId) {
