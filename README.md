@@ -24,7 +24,7 @@ module.exports = {
       failOnError: true,
       // allow import cycles that include an asyncronous import,
       // e.g. via import(/* webpackMode: "weak" */ './file.js')
-      allowAsyncCycles: true,
+      allowAsyncCycles: false,
       // set the current working directory for displaying module paths
       cwd: process.cwd(),
     })

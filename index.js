@@ -8,7 +8,7 @@ class CircularDependencyPlugin {
     this.options = extend({
       exclude: new RegExp('$^'),
       failOnError: false,
-      allowAsyncCycles: true,
+      allowAsyncCycles: false,
       onDetected: false,
       cwd: process.cwd()
     }, options)
