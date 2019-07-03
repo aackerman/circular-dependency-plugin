@@ -95,3 +95,7 @@ module.exports = {
   ]
 }
 ```
+
+### Maintenance
+
+This module is maintained despite few changes being necessary, please open issues if you find any bugs relating to integration with webpack core.
