@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.1.0
+
+* Added `include` option to allow checking only certain directories
+
 ## 5.0.1
 
 * Set webpack peer dependency to greater than `4.0.1`
