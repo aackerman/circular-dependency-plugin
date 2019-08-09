@@ -96,6 +96,28 @@ describe('circular dependency', () => {
     expect(stats.warnings[1]).toMatch(/g\.js/)
   })
 
+  it('can include only specific cyclical deps in the output', async () => {
+    let fs = new MemoryFS()
+    let compiler = webpack({
+      mode: 'development',
+      entry: path.join(__dirname, 'deps/d.js'),
+      output: { path: __dirname },
+      plugins: [
+        new CircularDependencyPlugin({
+          include: /f\.js/
+        })
+      ]
+    })
+    compiler.outputFileSystem = fs
+
+    let runAsync = wrapRun(compiler.run.bind(compiler))
+    let stats = await runAsync()
+    stats.warnings.forEach(warning => {
+      const firstFile = warning.match(/\w+\.js/)[0]
+      expect(firstFile).toMatch(/f\.js/)
+    })
+  })
+
   it(`can handle context modules that have an undefined resource h -> i -> a -> i`, async () => {
     let fs = new MemoryFS()
     let compiler = webpack({
