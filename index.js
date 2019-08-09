@@ -7,6 +7,7 @@ class CircularDependencyPlugin {
   constructor(options) {
     this.options = extend({
       exclude: new RegExp('$^'),
+      include: new RegExp('.*'),
       failOnError: false,
       allowAsyncCycles: false,
       onDetected: false,
@@ -26,7 +27,8 @@ class CircularDependencyPlugin {
         for (let module of modules) {
           const shouldSkip = (
             module.resource == null ||
-            plugin.options.exclude.test(module.resource)
+            plugin.options.exclude.test(module.resource) ||
+            !plugin.options.include.test(module.resource)
           )
           // skip the module if it matches the exclude pattern
           if (shouldSkip) {
