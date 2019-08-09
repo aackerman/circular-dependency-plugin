@@ -33,7 +33,7 @@ class CircularDependencyPlugin {
             continue
           }
 
-          let maybeCyclicalPathsList = this.isCyclic(module, module, {})
+          let maybeCyclicalPathsList = this.isCyclic(module, module, {}, compilation)
           if (maybeCyclicalPathsList) {
             // allow consumers to override all behavior with onDetected
             if (plugin.options.onDetected) {
@@ -65,7 +65,7 @@ class CircularDependencyPlugin {
     })
   }
 
-  isCyclic(initialModule, currentModule, seenModules) {
+  isCyclic(initialModule, currentModule, seenModules, compilation) {
     let cwd = this.options.cwd
 
     // Add the current module to the seen modules cache
@@ -79,7 +79,7 @@ class CircularDependencyPlugin {
 
     // Iterate over the current modules dependencies
     for (let dependency of currentModule.dependencies) {
-      let depModule = dependency.module
+      let depModule = compilation.moduleGraph.getModule(dependency)
       if (!depModule) { continue }
       // ignore dependencies that don't have an associated resource
       if (!depModule.resource) { continue }
@@ -98,7 +98,7 @@ class CircularDependencyPlugin {
         continue
       }
 
-      let maybeCyclicalPathsList = this.isCyclic(initialModule, depModule, seenModules)
+      let maybeCyclicalPathsList = this.isCyclic(initialModule, depModule, seenModules, compilation)
       if (maybeCyclicalPathsList) {
         maybeCyclicalPathsList.unshift(path.relative(cwd, currentModule.resource))
         return maybeCyclicalPathsList
