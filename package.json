@@ -4,7 +4,8 @@
   "devDependencies": {
     "jest": "^22.4.2",
     "memory-fs": "^0.4.1",
-    "webpack": "^4.0.1"
+    "webpack": "^4.0.1",
+    "webpack-next": "npm:webpack@^5.0.0-alpha.19"
   },
   "peerDependencies": {
     "webpack": ">=4.0.1"
