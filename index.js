@@ -58,16 +58,21 @@ class CircularDependencyPlugin {
 
         cycles.forEach((vertices) => {
           // Convert the array of vertices into an array of module paths
-          const cyclicPaths = vertices
+          const cyclicAbsolutePaths = vertices
             .slice()
             .reverse()
-            .map((vertex) => compilation.findModule(vertex.name).resource)
-            .filter((resource) => !(
-              resource == null ||
-              plugin.options.exclude.test(resource) ||
-              !plugin.options.include.test(resource)
-            ))
-            .map((resource) => path.relative(cwd, resource));
+            .map((vertex) => compilation.findModule(vertex.name).resource);
+
+          if (cyclicAbsolutePaths.every((resource) => (
+            resource == null ||
+            plugin.options.exclude.test(resource) ||
+            !plugin.options.include.test(resource)
+          ))) {
+            // If all modules in the cycle are excluded by the config, don't report an error
+            return;
+          }
+
+          const cyclicPaths = cyclicAbsolutePaths.map((resource) => path.relative(cwd, resource));
 
           // allow consumers to override all behavior with onDetected
           if (plugin.options.onDetected) {

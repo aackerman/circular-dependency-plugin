@@ -120,7 +120,7 @@ for (let version of versions) {
       expect(msg0).toMatch(/Circular/)
     })
 
-    it('can include only specific cyclical deps in the output', async () => {
+    it('includes all cyclical deps in the output even if some are excluded', async () => {
       let fs = new MemoryFS()
       let compiler = webpack({
         mode: 'development',
@@ -136,11 +136,28 @@ for (let version of versions) {
 
       let runAsync = wrapRun(compiler.run.bind(compiler))
       let stats = await runAsync()
-      stats.warnings.forEach(warning => {
-        let msg = typeof warning == 'string' ? warning : warning.message
-        const firstFile = msg.match(/\w+\.js/)[0]
-        expect(firstFile).toMatch(/f\.js/)
+      let msg0 = getWarningMessage(stats, 0)
+      expect(msg0).toMatch(/Circular dependency detected:\s*__tests__\/deps\/e.js -> __tests__\/deps\/f.js -> __tests__\/deps\/g.js -> __tests__\/deps\/e.js/)
+    })
+
+    it('does not report errors for cycles where all files are excluded', async () => {
+      let fs = new MemoryFS()
+      let compiler = webpack({
+        mode: 'development',
+        entry: path.join(__dirname, 'deps/d.js'),
+        output: { path: __dirname },
+        plugins: [
+          new CircularDependencyPlugin({
+            exclude: /(e|f|g)\.js/
+          })
+        ]
       })
+      compiler.outputFileSystem = fs
+
+      let runAsync = wrapRun(compiler.run.bind(compiler))
+      let stats = await runAsync()
+      let msg0 = getWarningMessage(stats, 0)
+      expect(msg0).toEqual(null)
     })
 
     it(`can handle context modules that have an undefined resource h -> i -> a -> i`, async () => {
