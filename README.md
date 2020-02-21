@@ -63,34 +63,41 @@ module.exports = {
 }
 ```
 
-If you have some number of cycles and want to fail if any new ones are
-introduced, you can use the life cycle methods to count and fail when the
-count is exceeded. (Note if you care about detecting a cycle being replaced by
-another, this won't catch that.)
+If you have some known circular dependencies and want to fail if any new ones are
+introduced (or known ones are fixed/removed), you can use the life cycle methods to keep track of differences to known cycles.
 
 ```js
 // webpack.config.js
 const CircularDependencyPlugin = require('circular-dependency-plugin')
 
-const MAX_CYCLES = 5;
-let numCyclesDetected = 0;
+// We do not wanr about cycles that are listed here.
+const knownCircularDependencies = ['src/file1.js -> src/file2.js -> src/file1.js'];
+let foundCircularDependencies = [];
 
 module.exports = {
   entry: "./src/index",
   plugins: [
     new CircularDependencyPlugin({
       onStart({ compilation }) {
-        numCyclesDetected = 0;
+        foundCircularDependencies = [];
       },
       onDetected({ module: webpackModuleRecord, paths, compilation }) {
-        numCyclesDetected++;
-        compilation.warnings.push(new Error(paths.join(' -> ')))
+        foundCircularDependencies.push(paths.join(' -> '));
       },
       onEnd({ compilation }) {
-        if (numCyclesDetected > MAX_CYCLES) {
-          compilation.errors.push(new Error(
-            `Detected ${numCyclesDetected} cycles which exceeds configured limit of ${MAX_CYCLES}`
-          ));
+        const removedCircularDependencies = knownCircularDependencies
+          .filter(knownCircularDependency => !foundCircularDependencies.includes(knownCircularDependency));
+        const addedCircularDependencies = foundCircularDependencies
+          .filter(foundCircularDependency => !knownCircularDependencies.includes(foundCircularDependency));
+        
+        if (addedCircularDependencies.length) {
+          addedCircularDependencies.forEach(newCircularDependency =>
+            compilation.warnings.push(`A new circular dependency was introduced:\n ${newCircularDependency}`)
+          );
+        } else if (removedCircularDependencies.length) {
+          removedCircularDependencies.forEach(removedCircularDependency =>
+            compilation.warnings.push(`A circular dependency was removed:\n ${removedCircularDependency}`)
+          );
         }
       },
     })
