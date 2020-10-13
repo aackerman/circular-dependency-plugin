@@ -57,11 +57,8 @@ for (let version of versions) {
       let stats = await runAsync()
 
       let msg0 = getWarningMessage(stats, 0)
-      let msg1 = getWarningMessage(stats, 1)
       expect(msg0).toContain('__tests__/deps/b.js -> __tests__/deps/c.js -> __tests__/deps/b.js')
       expect(msg0).toMatch(/Circular/)
-      expect(msg1).toMatch(/b\.js/)
-      expect(msg1).toMatch(/c\.js/)
     })
 
     it('detects circular dependencies from d -> e -> f -> g -> e', async () => {
@@ -78,12 +75,8 @@ for (let version of versions) {
       let stats = await runAsync()
 
       let msg0 = getWarningMessage(stats, 0)
-      let msg1 = getWarningMessage(stats, 1)
       expect(msg0).toContain('__tests__/deps/e.js -> __tests__/deps/f.js -> __tests__/deps/g.js -> __tests__/deps/e.js')
       expect(msg0).toMatch(/Circular/)
-      expect(msg1).toMatch(/e\.js/)
-      expect(msg1).toMatch(/f\.js/)
-      expect(msg1).toMatch(/g\.js/)
     })
 
     it('uses errors instead of warnings with failOnError', async () => {
@@ -102,12 +95,8 @@ for (let version of versions) {
       let stats = await runAsync()
 
       let err0 = getErrorsMessage(stats, 0)
-      let err1 = getErrorsMessage(stats, 1)
       expect(err0).toContain('__tests__/deps/e.js -> __tests__/deps/f.js -> __tests__/deps/g.js -> __tests__/deps/e.js')
       expect(err0).toMatch(/Circular/)
-      expect(err1).toMatch(/e\.js/)
-      expect(err1).toMatch(/f\.js/)
-      expect(err1).toMatch(/g\.js/)
     })
 
     it('can exclude cyclical deps from being output', async () => {
@@ -128,13 +117,10 @@ for (let version of versions) {
       let stats = await runAsync()
 
       let msg0 = getWarningMessage(stats, 0)
-      let msg1 = getWarningMessage(stats, 1)
       expect(msg0).toMatch(/Circular/)
-      expect(msg1).toMatch(/e\.js/)
-      expect(msg1).toMatch(/g\.js/)
     })
 
-    it('can include only specific cyclical deps in the output', async () => {
+    it('includes all cyclical deps in the output even if some are excluded', async () => {
       let fs = new MemoryFS()
       let compiler = webpack({
         mode: 'development',
@@ -150,11 +136,28 @@ for (let version of versions) {
 
       let runAsync = wrapRun(compiler.run.bind(compiler))
       let stats = await runAsync()
-      stats.warnings.forEach(warning => {
-        let msg = typeof warning == 'string' ? warning : warning.message
-        const firstFile = msg.match(/\w+\.js/)[0]
-        expect(firstFile).toMatch(/f\.js/)
+      let msg0 = getWarningMessage(stats, 0)
+      expect(msg0).toMatch(/Circular dependency detected:\s*__tests__\/deps\/e.js -> __tests__\/deps\/f.js -> __tests__\/deps\/g.js -> __tests__\/deps\/e.js/)
+    })
+
+    it('does not report errors for cycles where all files are excluded', async () => {
+      let fs = new MemoryFS()
+      let compiler = webpack({
+        mode: 'development',
+        entry: path.join(__dirname, 'deps/d.js'),
+        output: { path: __dirname },
+        plugins: [
+          new CircularDependencyPlugin({
+            exclude: /(e|f|g)\.js/
+          })
+        ]
       })
+      compiler.outputFileSystem = fs
+
+      let runAsync = wrapRun(compiler.run.bind(compiler))
+      let stats = await runAsync()
+      let msg0 = getWarningMessage(stats, 0)
+      expect(msg0).toEqual(null)
     })
 
     it(`can handle context modules that have an undefined resource h -> i -> a -> i`, async () => {
@@ -227,10 +230,10 @@ for (let version of versions) {
       let runAsync = wrapRun(compiler.run.bind(compiler))
       await runAsync()
       expect(cyclesPaths).toEqual([
-        '__tests__/deps/g.js',
         '__tests__/deps/e.js',
         '__tests__/deps/f.js',
-        '__tests__/deps/g.js'
+        '__tests__/deps/g.js',
+        '__tests__/deps/e.js',
       ])
     })
 
@@ -254,11 +257,7 @@ for (let version of versions) {
       let stats = await runAsync()
 
       let msg0 = getWarningMessage(stats, 0)
-      let msg1 = getWarningMessage(stats, 1)
       expect(msg0).toContain('__tests__/deps/e.js -> __tests__/deps/f.js -> __tests__/deps/g.js -> __tests__/deps/e.js')
-      expect(msg1).toMatch(/e\.js/)
-      expect(msg1).toMatch(/f\.js/)
-      expect(msg1).toMatch(/g\.js/)
     })
 
     it('can detect circular dependencies when the ModuleConcatenationPlugin is used', async () => {
@@ -278,9 +277,7 @@ for (let version of versions) {
       let stats = await runAsync()
 
       let msg0 = getWarningMessage(stats, 0)
-      let msg1 = getWarningMessage(stats, 1)
       expect(msg0).toContain('__tests__/deps/module-concat-plugin-compat/a.js -> __tests__/deps/module-concat-plugin-compat/b.js -> __tests__/deps/module-concat-plugin-compat/a.js')
-      expect(msg1).toContain('__tests__/deps/module-concat-plugin-compat/b.js -> __tests__/deps/module-concat-plugin-compat/a.js -> __tests__/deps/module-concat-plugin-compat/b.js')
     })
   })
 }

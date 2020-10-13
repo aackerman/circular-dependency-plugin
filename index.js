@@ -1,5 +1,6 @@
 let path = require('path')
 let extend = require('util')._extend
+let Graph = require('tarjan-graph')
 let BASE_ERROR = 'Circular dependency detected:\r\n'
 let PluginTitle = 'CircularDependencyPlugin'
 
@@ -24,98 +25,82 @@ class CircularDependencyPlugin {
         if (plugin.options.onStart) {
           plugin.options.onStart({ compilation });
         }
+        const dependencyGraph = new Graph()
+        //console.log('LENGTH', modules.length);
         for (let module of modules) {
-          const shouldSkip = (
-            module.resource == null ||
-            plugin.options.exclude.test(module.resource) ||
-            !plugin.options.include.test(module.resource)
-          )
-          // skip the module if it matches the exclude pattern
-          if (shouldSkip) {
-            continue
-          }
 
-          let maybeCyclicalPathsList = this.isCyclic(module, module, {}, compilation)
-          if (maybeCyclicalPathsList) {
-            // allow consumers to override all behavior with onDetected
-            if (plugin.options.onDetected) {
-              try {
-                plugin.options.onDetected({
-                  module: module,
-                  paths: maybeCyclicalPathsList,
-                  compilation: compilation
-                })
-              } catch(err) {
-                compilation.errors.push(err)
-              }
-              continue
-            }
-
-            // mark warnings or errors on webpack compilation
-            let error = new Error(BASE_ERROR.concat(maybeCyclicalPathsList.join(' -> ')))
-            if (plugin.options.failOnError) {
-              compilation.errors.push(error)
+          // Iterate over the current modules dependencies
+          const dependedModuleIds = [];
+          for (let dependency of module.dependencies) {
+            let depModule = null
+            if (compilation.moduleGraph) {
+              // handle getting a module for webpack 5
+              depModule = compilation.moduleGraph.getModule(dependency)
             } else {
-              compilation.warnings.push(error)
+              // handle getting a module for webpack 4
+              depModule = dependency.module
             }
+
+            if (!depModule) { continue }
+
+            // ignore dependencies that don't have an associated resource
+            if (!depModule.resource) { continue }
+
+            // optionally ignore dependencies that are resolved asynchronously
+            if (this.options.allowAsyncCycles && dependency.weak) { continue }
+
+            dependedModuleIds.push(depModule.identifier());
           }
+          dependencyGraph.add(module.identifier(), dependedModuleIds)
         }
+
+        const cycles = dependencyGraph.getCycles();
+
+        cycles.forEach((vertices) => {
+          // Convert the array of vertices into an array of module paths
+          const cyclicAbsolutePaths = vertices
+            .slice()
+            .reverse()
+            .map((vertex) => compilation.findModule(vertex.name).resource);
+
+          if (cyclicAbsolutePaths.every((resource) => (
+            resource == null ||
+            plugin.options.exclude.test(resource) ||
+            !plugin.options.include.test(resource)
+          ))) {
+            // If all modules in the cycle are excluded by the config, don't report an error
+            return;
+          }
+
+          const cyclicPaths = cyclicAbsolutePaths.map((resource) => path.relative(cwd, resource));
+
+          // allow consumers to override all behavior with onDetected
+          if (plugin.options.onDetected) {
+            try {
+              plugin.options.onDetected({
+                module: module,
+                paths: cyclicPaths.concat([cyclicPaths[0]]),
+                compilation: compilation
+              })
+            } catch(err) {
+              compilation.errors.push(err)
+            }
+            return
+          }
+
+          // mark warnings or errors on webpack compilation
+          let error = new Error(BASE_ERROR.concat(cyclicPaths.concat([cyclicPaths[0]]).join(' -> ')))
+          if (plugin.options.failOnError) {
+            compilation.errors.push(error)
+          } else {
+            compilation.warnings.push(error)
+          }
+        });
         if (plugin.options.onEnd) {
           plugin.options.onEnd({ compilation });
         }
       })
     })
-  }
-
-  isCyclic(initialModule, currentModule, seenModules, compilation) {
-    let cwd = this.options.cwd
-
-    // Add the current module to the seen modules cache
-    seenModules[currentModule.debugId] = true
-
-    // If the modules aren't associated to resources
-    // it's not possible to display how they are cyclical
-    if (!currentModule.resource || !initialModule.resource) {
-      return false
-    }
-
-    // Iterate over the current modules dependencies
-    for (let dependency of currentModule.dependencies) {
-      let depModule = null
-      if (compilation.moduleGraph) {
-        // handle getting a module for webpack 5
-        depModule = compilation.moduleGraph.getModule(dependency)
-      } else {
-        // handle getting a module for webpack 4
-        depModule = dependency.module
-      }
-
-      if (!depModule) { continue }
-      // ignore dependencies that don't have an associated resource
-      if (!depModule.resource) { continue }
-      // ignore dependencies that are resolved asynchronously
-      if (this.options.allowAsyncCycles && dependency.weak) { continue }
-
-      if (depModule.debugId in seenModules) {
-        if (depModule.debugId === initialModule.debugId) {
-          // Initial module has a circular dependency
-          return [
-            path.relative(cwd, currentModule.resource),
-            path.relative(cwd, depModule.resource)
-          ]
-        }
-        // Found a cycle, but not for this module
-        continue
-      }
-
-      let maybeCyclicalPathsList = this.isCyclic(initialModule, depModule, seenModules, compilation)
-      if (maybeCyclicalPathsList) {
-        maybeCyclicalPathsList.unshift(path.relative(cwd, currentModule.resource))
-        return maybeCyclicalPathsList
-      }
-    }
-
-    return false
   }
 }
 
