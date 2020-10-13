@@ -15,8 +15,8 @@ let versions = [{
   name: 'webpack',
   module: require('webpack'),
 }, {
-  name: 'webpack-next',
-  module: require('webpack-next'),
+  name: 'webpack5',
+  module: require('webpack5'),
 }]
 
 let getWarningMessage = (stats, index) => {
