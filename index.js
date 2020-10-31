@@ -102,6 +102,11 @@ class CircularDependencyPlugin {
       if (!depModule.resource) { continue }
       // ignore dependencies that are resolved asynchronously
       if (this.options.allowAsyncCycles && dependency.weak) { continue }
+      // the dependency was resolved to the current module due to how webpack internals
+      // setup dependencies like CommonJsSelfReferenceDependency and ModuleDecoratorDependency
+      if (currentModule === depModule) {
+        continue
+      }
 
       if (depModule.debugId in seenModules) {
         if (depModule.debugId === initialModule.debugId) {

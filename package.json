@@ -4,6 +4,8 @@
   "devDependencies": {
     "jest": "^22.4.2",
     "memory-fs": "^0.4.1",
+    "ts-loader": "^8.0.7",
+    "typescript": "^4.0.5",
     "webpack": "^4.0.1",
     "webpack5": "npm:webpack@^5.0.0"
   },
