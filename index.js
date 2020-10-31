@@ -81,6 +81,13 @@ class CircularDependencyPlugin {
 
     // Iterate over the current modules dependencies
     for (let dependency of currentModule.dependencies) {
+      if (
+        dependency.constructor &&
+        dependency.constructor.name === 'CommonJsSelfReferenceDependency'
+      ) {
+        continue
+      }
+
       let depModule = null
       if (compilation.moduleGraph) {
         // handle getting a module for webpack 5

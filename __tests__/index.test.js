@@ -282,6 +282,43 @@ for (let version of versions) {
       expect(msg0).toContain('__tests__/deps/module-concat-plugin-compat/a.js -> __tests__/deps/module-concat-plugin-compat/b.js -> __tests__/deps/module-concat-plugin-compat/a.js')
       expect(msg1).toContain('__tests__/deps/module-concat-plugin-compat/b.js -> __tests__/deps/module-concat-plugin-compat/a.js -> __tests__/deps/module-concat-plugin-compat/b.js')
     })
+
+    describe('ignores CommonJsSelfReferenceDependency dependencies', () => {
+      it('ignores this references', async () => {
+        let fs = new MemoryFS()
+        let compiler = webpack({
+          mode: 'development',
+          entry: path.join(__dirname, 'deps', 'self-referencing', 'uses-this.js'),
+          output: { path: __dirname },
+          plugins: [ new CircularDependencyPlugin() ]
+        })
+        compiler.outputFileSystem = fs
+
+        let runAsync = wrapRun(compiler.run.bind(compiler))
+        let stats = await runAsync()
+
+        expect(stats.errors.length).toEqual(0)
+        expect(stats.warnings.length).toEqual(0)
+      })
+
+      it('ignores module.exports references', async () => {
+        let fs = new MemoryFS()
+        let compiler = webpack({
+          mode: 'development',
+          entry: path.join(__dirname, 'deps', 'self-referencing', 'uses-exports.js'),
+          output: { path: __dirname },
+          plugins: [ new CircularDependencyPlugin() ]
+        })
+        compiler.outputFileSystem = fs
+
+        let runAsync = wrapRun(compiler.run.bind(compiler))
+        let stats = await runAsync()
+
+        expect(stats.errors.length).toEqual(0)
+        expect(stats.warnings.length).toEqual(0)
+      })
+    })
+
   })
 }
 
