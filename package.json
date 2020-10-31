@@ -13,7 +13,7 @@
     "webpack": ">=4.0.1"
   },
   "description": "Detect modules with circular dependencies when bundling with webpack.",
-  "version": "5.2.1",
+  "version": "5.2.2",
   "engines": {
     "node": ">=6.0.0"
   },

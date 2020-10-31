@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.2.2
+
+* Fixed an issue where typescript modules were identified as having a circular dependency on themselves in Webpack 5
+
 ## 5.2.1
 
 * Fixed an issue where modules that do not include themselves were marked as having circular dependencies
