@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.2.1
+
+* Fixed an issue where modules that do not include themselves were marked as having circular dependencies
+
+## 5.2.0
+
+* Webpack 5 compatibility
+
 ## 5.1.0
 
 * Added `include` option to allow checking only certain directories
