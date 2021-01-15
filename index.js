@@ -2,6 +2,7 @@ let path = require('path')
 let extend = require('util')._extend
 let BASE_ERROR = 'Circular dependency detected:\r\n'
 let PluginTitle = 'CircularDependencyPlugin'
+let { isAcyclic } = require('./is-acyclic');
 
 class CircularDependencyPlugin {
   constructor(options) {
@@ -25,9 +26,9 @@ class CircularDependencyPlugin {
           plugin.options.onStart({ compilation });
         }
 
-        const [vertices, arrow] = webpackDependencyGraph(compilation, modules, plugin, this.options);
+        const graph = webpackDependencyGraph(compilation, modules, plugin, this.options);
 
-        cycleDetector(vertices, arrow, (cycle) => {
+        cycleDetector(graph, (cycle) => {
           // print modules as paths in error messages
           const cyclicalPaths = cycle.map(
             (module) => path.relative(cwd, module.resource));
@@ -65,7 +66,7 @@ class CircularDependencyPlugin {
 /**
  * Construct the dependency (directed) graph for the given plugin options
  *
- * Returns the graph as a pair (vertices, arrow) where
+ * Returns the graph as a object { vertices, arrow } where
  * - vertices is an array containing all vertices, and
  * - arrow is a function mapping vertices to the array of dependencies, that is, 
  *   the head vertex for each graph edge whose tail is the given vertex.
@@ -113,7 +114,7 @@ function webpackDependencyGraph(compilation, modules, plugin, options) {
           return true;
         });
 
-  return [vertices, arrow];
+  return { vertices, arrow };
 }
 
 
@@ -122,13 +123,17 @@ function webpackDependencyGraph(compilation, modules, plugin, options) {
  *
  * The graph is acyclic iff the callback is not called.
  */
-function cycleDetector(vertices, arrow, cycleCallback) {
+function cycleDetector(graph, cycleCallback) {
+  // checking that there are no cycles is much faster than actually listing cycles
+  if (isAcyclic(graph))
+    return;
+
   /**
    * This is the old implementation which has performance issues. In the future, it might
    * be replaced with a different implementation. Keep it for now so none of the unit tests change.
    */
-  for (let module of vertices) {
-    let cycle = findModuleCycleAt(module, module, {}, arrow)
+  for (let module of graph.vertices) {
+    let cycle = findModuleCycleAt(module, module, {}, graph.arrow)
     if (cycle) {
       cycleCallback(cycle);
     }
