@@ -27,73 +27,37 @@ class CircularDependencyPlugin {
 
         const [vertices, arrow] = webpackDependencyGraph(compilation, modules, plugin, this.options);
 
-        for (let module of vertices) {
-          let maybeCyclicalPathsList = this.isCyclic(module, module, {}, arrow)
-          if (maybeCyclicalPathsList) {
-            // allow consumers to override all behavior with onDetected
-            if (plugin.options.onDetected) {
-              try {
-                plugin.options.onDetected({
-                  module: module,
-                  paths: maybeCyclicalPathsList,
-                  compilation: compilation
-                })
-              } catch(err) {
-                compilation.errors.push(err)
-              }
-              continue
+        cycleDetector(vertices, arrow, (cycle) => {
+          // print modules as paths in error messages
+          const cyclicalPaths = cycle.map(
+            (module) => path.relative(cwd, module.resource));
+          // allow consumers to override all behavior with onDetected
+          if (plugin.options.onDetected) {
+            try {
+              plugin.options.onDetected({
+                module: module,
+                paths: cyclicalPaths,
+                compilation: compilation
+              })
+            } catch(err) {
+              compilation.errors.push(err)
             }
-
+          } else {
             // mark warnings or errors on webpack compilation
-            let error = new Error(BASE_ERROR.concat(maybeCyclicalPathsList.join(' -> ')))
+            let error = new Error(BASE_ERROR.concat(cyclicalPaths.join(' -> ')))
             if (plugin.options.failOnError) {
               compilation.errors.push(error)
             } else {
               compilation.warnings.push(error)
             }
           }
-        }
+        });
+
         if (plugin.options.onEnd) {
           plugin.options.onEnd({ compilation });
         }
       })
     })
-  }
-
-  isCyclic(initialModule, currentModule, seenModules, arrow) {
-    let cwd = this.options.cwd
-
-    // Add the current module to the seen modules cache
-    seenModules[currentModule.debugId] = true
-
-    // If the modules aren't associated to resources
-    // it's not possible to display how they are cyclical
-    if (!currentModule.resource || !initialModule.resource) {
-      return false
-    }
-
-    // Iterate over the current modules dependencies
-    for (let depModule of arrow(currentModule)) {
-      if (depModule.debugId in seenModules) {
-        if (depModule.debugId === initialModule.debugId) {
-          // Initial module has a circular dependency
-          return [
-            path.relative(cwd, currentModule.resource),
-            path.relative(cwd, depModule.resource)
-          ]
-        }
-        // Found a cycle, but not for this module
-        continue
-      }
-
-      let maybeCyclicalPathsList = this.isCyclic(initialModule, depModule, seenModules, arrow)
-      if (maybeCyclicalPathsList) {
-        maybeCyclicalPathsList.unshift(path.relative(cwd, currentModule.resource))
-        return maybeCyclicalPathsList
-      }
-    }
-
-    return false
   }
 }
 
@@ -101,7 +65,7 @@ class CircularDependencyPlugin {
 /**
  * Construct the dependency (directed) graph for the given plugin options
  *
- * Returns the graph as a pair [vertices, arrow] where 
+ * Returns the graph as a pair (vertices, arrow) where
  * - vertices is an array containing all vertices, and
  * - arrow is a function mapping vertices to the array of dependencies, that is, 
  *   the head vertex for each graph edge whose tail is the given vertex.
@@ -151,5 +115,61 @@ function webpackDependencyGraph(compilation, modules, plugin, options) {
 
   return [vertices, arrow];
 }
+
+
+/**
+ * Call the callback with all cycles in the directed graph defined by (vertices, arrow)
+ *
+ * The graph is acyclic iff the callback is not called.
+ */
+function cycleDetector(vertices, arrow, cycleCallback) {
+  /**
+   * This is the old implementation which has performance issues. In the future, it might
+   * be replaced with a different implementation. Keep it for now so none of the unit tests change.
+   */
+  for (let module of vertices) {
+    let cycle = findModuleCycleAt(module, module, {}, arrow)
+    if (cycle) {
+      cycleCallback(cycle);
+    }
+  }
+}
+
+
+// part of the cycleDetector implementation
+function findModuleCycleAt(initialModule, currentModule, seenModules, arrow) {
+
+  // Add the current module to the seen modules cache
+  seenModules[currentModule.debugId] = true
+
+  // If the modules aren't associated to resources
+  // it's not possible to display how they are cyclical
+  if (!currentModule.resource || !initialModule.resource) {
+    return false
+  }
+
+  // Iterate over the current modules dependencies
+  for (let depModule of arrow(currentModule)) {
+    if (depModule.debugId in seenModules) {
+      if (depModule.debugId === initialModule.debugId) {
+        // Initial module has a circular dependency
+        return [
+          currentModule,
+          depModule,
+        ]
+      }
+      // Found a cycle, but not for this module
+      continue
+    }
+
+    let maybeCyclicalPathsList = findModuleCycleAt(initialModule, depModule, seenModules, arrow)
+    if (maybeCyclicalPathsList) {
+      maybeCyclicalPathsList.unshift(currentModule);
+      return maybeCyclicalPathsList;
+    }
+  }
+  return false
+}
+
 
 module.exports = CircularDependencyPlugin
