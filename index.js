@@ -24,18 +24,11 @@ class CircularDependencyPlugin {
         if (plugin.options.onStart) {
           plugin.options.onStart({ compilation });
         }
-        for (let module of modules) {
-          const shouldSkip = (
-            module.resource == null ||
-            plugin.options.exclude.test(module.resource) ||
-            !plugin.options.include.test(module.resource)
-          )
-          // skip the module if it matches the exclude pattern
-          if (shouldSkip) {
-            continue
-          }
 
-          let maybeCyclicalPathsList = this.isCyclic(module, module, {}, compilation)
+        const [vertices, arrow] = webpackDependencyGraph(compilation, modules, plugin, this.options);
+
+        for (let module of vertices) {
+          let maybeCyclicalPathsList = this.isCyclic(module, module, {}, arrow)
           if (maybeCyclicalPathsList) {
             // allow consumers to override all behavior with onDetected
             if (plugin.options.onDetected) {
@@ -67,7 +60,7 @@ class CircularDependencyPlugin {
     })
   }
 
-  isCyclic(initialModule, currentModule, seenModules, compilation) {
+  isCyclic(initialModule, currentModule, seenModules, arrow) {
     let cwd = this.options.cwd
 
     // Add the current module to the seen modules cache
@@ -80,34 +73,7 @@ class CircularDependencyPlugin {
     }
 
     // Iterate over the current modules dependencies
-    for (let dependency of currentModule.dependencies) {
-      if (
-        dependency.constructor &&
-        dependency.constructor.name === 'CommonJsSelfReferenceDependency'
-      ) {
-        continue
-      }
-
-      let depModule = null
-      if (compilation.moduleGraph) {
-        // handle getting a module for webpack 5
-        depModule = compilation.moduleGraph.getModule(dependency)
-      } else {
-        // handle getting a module for webpack 4
-        depModule = dependency.module
-      }
-
-      if (!depModule) { continue }
-      // ignore dependencies that don't have an associated resource
-      if (!depModule.resource) { continue }
-      // ignore dependencies that are resolved asynchronously
-      if (this.options.allowAsyncCycles && dependency.weak) { continue }
-      // the dependency was resolved to the current module due to how webpack internals
-      // setup dependencies like CommonJsSelfReferenceDependency and ModuleDecoratorDependency
-      if (currentModule === depModule) {
-        continue
-      }
-
+    for (let depModule of arrow(currentModule)) {
       if (depModule.debugId in seenModules) {
         if (depModule.debugId === initialModule.debugId) {
           // Initial module has a circular dependency
@@ -120,7 +86,7 @@ class CircularDependencyPlugin {
         continue
       }
 
-      let maybeCyclicalPathsList = this.isCyclic(initialModule, depModule, seenModules, compilation)
+      let maybeCyclicalPathsList = this.isCyclic(initialModule, depModule, seenModules, arrow)
       if (maybeCyclicalPathsList) {
         maybeCyclicalPathsList.unshift(path.relative(cwd, currentModule.resource))
         return maybeCyclicalPathsList
@@ -129,6 +95,61 @@ class CircularDependencyPlugin {
 
     return false
   }
+}
+
+
+/**
+ * Construct the dependency (directed) graph for the given plugin options
+ *
+ * Returns the graph as a pair [vertices, arrow] where 
+ * - vertices is an array containing all vertices, and
+ * - arrow is a function mapping vertices to the array of dependencies, that is, 
+ *   the head vertex for each graph edge whose tail is the given vertex.
+ */
+function webpackDependencyGraph(compilation, modules, plugin, options) {
+
+  // vertices of the dependency graph are the modules
+  const vertices = modules.filter((module) =>
+    module.resource != null &&
+      !plugin.options.exclude.test(module.resource) &&
+      plugin.options.include.test(module.resource)
+  );
+
+  // arrow function for the dependency graph
+  const arrow = (module) => module.dependencies
+        .filter((dependency) => {
+          // ignore CommonJsSelfReferenceDependency
+          if (dependency.constructor &&
+              dependency.constructor.name === 'CommonJsSelfReferenceDependency') {
+            return false;
+          }
+          // ignore dependencies that are resolved asynchronously
+          if (options.allowAsyncCycles && dependency.weak) { return false }
+          return true;
+        })
+        .map((dependency) => {
+          // map webpack dependency to module
+          if (compilation.moduleGraph) {
+            // handle getting a module for webpack 5
+            return compilation.moduleGraph.getModule(dependency)
+          } else {
+            // handle getting a module for webpack 4
+            return dependency.module
+          }
+        })
+        .filter((depModule) => {
+          if (!depModule) { return false }
+          // ignore dependencies that don't have an associated resource
+          if (!depModule.resource) { return false }
+          // the dependency was resolved to the current module due to how webpack internals
+          // setup dependencies like CommonJsSelfReferenceDependency and ModuleDecoratorDependency
+          if (module === depModule) {
+            return false
+          }
+          return true;
+        });
+
+  return [vertices, arrow];
 }
 
 module.exports = CircularDependencyPlugin
