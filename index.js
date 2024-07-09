@@ -1,18 +1,18 @@
 let path = require('path')
-let extend = require('util')._extend
 let BASE_ERROR = 'Circular dependency detected:\r\n'
 let PluginTitle = 'CircularDependencyPlugin'
 
 class CircularDependencyPlugin {
   constructor(options) {
-    this.options = extend({
+    this.options = {
       exclude: new RegExp('$^'),
       include: new RegExp('.*'),
       failOnError: false,
       allowAsyncCycles: false,
       onDetected: false,
-      cwd: process.cwd()
-    }, options)
+      cwd: process.cwd(),
+      ...options
+    }
   }
 
   apply(compiler) {
