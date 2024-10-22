@@ -1,5 +1,5 @@
 let path = require('path')
-let extend = require('util')._extend
+let extend = Object.assign
 let BASE_ERROR = 'Circular dependency detected:\r\n'
 let PluginTitle = 'CircularDependencyPlugin'
 
